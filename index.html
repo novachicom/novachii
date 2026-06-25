@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Novachi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d14;
+    --surface: #16161f;
+    --card: #1e1e2e;
+    --border: #2a2a3d;
+    --accent: #c084fc;
+    --accent2: #818cf8;
+    --gold: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --nav-h: 64px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  .screen { display:none; flex-direction:column; min-height:100vh; padding-bottom:var(--nav-h); }
+  .screen.active { display:flex; }
+
+  .topbar {
+    padding: 14px 16px 10px;
+    background: var(--bg);
+    position: sticky; top:0; z-index:10;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-row1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .top10-badge {
+    display:flex; align-items:center; gap:6px;
+    background: linear-gradient(135deg,#7c3aed,#c084fc);
+    padding:5px 12px; border-radius:20px;
+    font-size:13px; font-weight:600;
+  }
+
+  .app-logo { display: flex; align-items: center; user-select: none; cursor: pointer; }
+  .logo-nova { font-family: 'Cinzel', serif; font-size: 21px; font-weight: 900; letter-spacing: 0.5px; color: #ffffff; text-shadow: 0 2px 10px rgba(255,255,255,0.4); }
+  .logo-dot::before { content: '✦'; font-size: 14px; color: var(--gold); margin: 0 3px; filter: drop-shadow(0 0 6px var(--gold)); transform: translateY(-1px); display: inline-block; }
+  .logo-chi { font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 300; letter-spacing: -0.5px; background: linear-gradient(135deg, var(--accent), #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .user-icon { width:36px; height:36px; border-radius:50%; background:var(--card); border:2px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; }
+  .search-row { display:flex; gap:8px; }
+  .search-wrap { flex:1; display:flex; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:0 12px; gap:8px; }
+  .search-wrap input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:14px; padding:9px 0; font-family:'Inter',sans-serif; }
+  .search-wrap input::placeholder { color:var(--muted); }
+
+  .tabs { display:flex; padding:0 16px; border-bottom:1px solid var(--border); background:var(--bg); position:sticky; top:101px; z-index:9; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { padding:10px 14px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s; }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  .content { flex:1; padding:12px 16px; overflow-y:auto; }
+  .section-label { font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin:8px 0 10px; }
+
+  .top10-strip { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:16px; scrollbar-width:none; }
+  .top10-strip::-webkit-scrollbar { display:none; }
+  .top10-card { min-width:90px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:transform .2s; position:relative; }
+  .top10-card:active { transform:scale(.96); }
+  .rank-badge { position:absolute; top:-6px; left:-6px; width:22px; height:22px; border-radius:50%; background:var(--accent); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .rank-badge.gold { background:var(--gold); }
+  .rank-badge.silver { background:#94a3b8; }
+  .rank-badge.bronze { background:#cd7c2f; }
+  .top10-cover { width:60px; height:80px; border-radius:6px; background:linear-gradient(135deg,#312e81,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; }
+  .top10-title { font-size:10px; font-weight:600; text-align:center; max-width:80px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .top10-views { font-size:9px; color:var(--muted); }
+
+  .novel-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; gap:12px; margin-bottom:12px; cursor:pointer; transition:border-color .2s, transform .15s; }
+  .novel-card:active { transform:scale(.98); border-color:var(--accent2); }
+  .novel-cover { width:70px; height:95px; border-radius:8px; background:linear-gradient(145deg,#1e1b4b,#4c1d95); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden; }
+  .novel-cover img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
+  .novel-info { flex:1; min-width:0; }
+  .novel-title { font-size:15px; font-weight:700; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .novel-summary { font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .novel-genre { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; background:rgba(192,132,252,.15); color:var(--accent); margin-bottom:6px; }
+  .novel-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .meta-item { display:flex; align-items:center; gap:3px; font-size:11px; color:var(--muted); }
+  .novel-date { font-size:10px; color:var(--muted); margin-top:4px; }
+
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; height:var(--nav-h); background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; }
+  .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; transition:all .2s; position:relative; }
+  .nav-btn .nav-icon { font-size:22px; transition:transform .2s; }
+  .nav-btn .nav-label { font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .nav-btn.active .nav-label { color:var(--accent); }
+  .nav-btn.active .nav-icon { transform:translateY(-2px); }
+  .nav-btn.active::after { content:''; position:absolute; top:0; left:25%; right:25%; height:2px; background:var(--accent); border-radius:0 0 4px 4px; }
+
+  .add-screen-inner { padding:20px 16px; }
+  .screen-title { font-family:'Cinzel',serif; font-size:22px; font-weight:900; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:6px; }
+  .screen-sub { font-size:13px; color:var(--muted); margin-bottom:20px; }
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px; display:block; }
+  .form-input, .form-textarea { width:100%; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; transition:border-color .2s; -webkit-appearance:none; }
+  .form-textarea { resize:none; height:90px; line-height:1.5; }
+  .form-input:focus, .form-textarea:focus { border-color:var(--accent); }
+
+  .genre-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .genre-chip { padding:8px 6px; border-radius:8px; border:1px solid var(--border); font-size:12px; text-align:center; cursor:pointer; transition:all .2s; color:var(--muted); }
+  .genre-chip.selected { border-color:var(--accent); background:rgba(192,132,252,.15); color:var(--accent); font-weight:600; }
+
+  .status-row { display:flex; gap:8px; }
+  .status-btn { flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); font-size:13px; text-align:center; cursor:pointer; color:var(--muted); transition:all .2s; }
+  .status-btn.sel-ongoing { border-color:#34d399; background:rgba(52,211,153,.1); color:#34d399; font-weight:600; }
+  .status-btn.sel-completed { border-color:var(--accent2); background:rgba(129,140,248,.1); color:var(--accent2); font-weight:600; }
+  .status-btn.sel-hiatus { border-color:var(--gold); background:rgba(245,158,11,.1); color:var(--gold); font-weight:600; }
+
+  .cover-upload-box { width:100%; height:130px; border:2px dashed var(--border); border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:border-color .2s; background:var(--card); position:relative; overflow:hidden; }
+  .cover-upload-box:hover { border-color:var(--accent); }
+  .cover-upload-box img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+  .cover-upload-box input { display:none; }
+  .cover-placeholder { text-align:center; color:var(--muted); font-size:13px; position:relative; z-index:1; }
+
+  .publish-btn { width:100%; padding:14px; border-radius:12px; border:none; background:linear-gradient(135deg,#7c3aed,#c084fc); color:#fff; font-size:16px; font-weight:700; cursor:pointer; margin-top:8px; font-family:'Inter',sans-serif; transition:opacity .2s,transform .15s; }
+  .publish-btn:active { opacity:.85; transform:scale(.98); }
+
+  .novel-detail-header { background: linear-gradient(180deg,#1e1b4b 0%,var(--bg) 100%); padding:20px 16px 16px; display:flex; gap:14px; align-items:flex-start; }
+  .detail-cover { width:90px; height:120px; border-radius:10px; background:linear-gradient(145deg,#1e1b4b,#4c1d95); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:38px; overflow:hidden; }
+  .detail-cover img { width:100%; height:100%; object-fit:cover; }
+  .detail-meta { flex:1; min-width:0; padding-top:4px; }
+  .detail-title { font-size:18px; font-weight:700; line-height:1.3; margin-bottom:6px; }
+  .detail-author { font-size:12px; color:var(--accent); margin-bottom:8px; }
+  .detail-genre { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; background:rgba(192,132,252,.15); color:var(--accent); margin-bottom:8px; }
+  .detail-stats { display:flex; gap:12px; flex-wrap:wrap; }
+  .detail-stat { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:3px; }
+  .detail-summary-box { padding:0 16px 12px; }
+  .detail-summary-title { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .detail-summary-text { font-size:13px; color:var(--text); line-height:1.7; }
+  .detail-actions { display:flex; gap:8px; padding:0 16px 12px; }
+  .btn-read { flex:2; padding:12px; border-radius:10px; border:none; background:linear-gradient(135deg,#7c3aed,#c084fc); color:#fff; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-like { flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-like.liked { border-color:#f43f5e; color:#f43f5e; }
+
+  .chapters-header { display:flex; align-items:center; justify-content:space-between; padding:0 16px 8px; }
+  .add-chapter-btn { font-size:12px; color:var(--accent); font-weight:600; cursor:pointer; padding:6px 12px; border:1px solid var(--accent); border-radius:20px; }
+  .chapter-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; }
+  .chapter-item:active { background:var(--card); }
+  .chap-num { font-size:12px; color:var(--accent2); font-weight:600; margin-bottom:2px; }
+  .chap-title { font-size:14px; font-weight:500; }
+
+  .read-topbar { display:flex; align-items:center; gap:12px; padding:14px 16px; background:var(--bg); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
+  .back-btn { font-size:22px; cursor:pointer; color:var(--text); }
+  .read-title { flex:1; font-size:14px; font-weight:600; line-height:1.3; }
+  .read-content { padding:20px 16px; font-size:16px; line-height:1.9; color:#cbd5e1; }
+  .read-content p { margin-bottom:16px; }
+  .read-nav { display:flex; gap:8px; padding:16px; }
+  .chapter-textarea { width:100%; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none; line-height:1.8; resize:none; min-height:300px; transition:border-color .2s; }
+  .chapter-textarea:focus { border-color:var(--accent); }
+
+  .profile-header { background:linear-gradient(180deg,#1e1b4b 0%,var(--bg) 100%); padding:30px 20px 20px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .profile-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#c084fc); display:flex; align-items:center; justify-content:center; font-size:36px; border:3px solid var(--accent); overflow:hidden; cursor:pointer; position:relative; }
+  .profile-name { font-family:'Cinzel',serif; font-size:20px; font-weight:700; }
+  .profile-handle { font-size:13px; color:var(--muted); }
+  .profile-stats { display:flex; background:var(--card); border:1px solid var(--border); border-radius:14px; margin:0 16px 16px; overflow:hidden; }
+  .stat-item { flex:1; padding:14px 8px; text-align:center; border-right:1px solid var(--border); }
+  .stat-item:last-child { border-right:none; }
+  .stat-val { font-size:20px; font-weight:700; color:var(--accent); }
+  .stat-key { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .profile-section-label { font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); padding:0 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+
+  .empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
+  .empty-text { font-size:14px; line-height:1.6; }
+
+  .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:#34d399; color:#052e16; padding:10px 20px; border-radius:30px; font-size:13px; font-weight:700; opacity:0; transition:all .3s; z-index:300; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  /* ── SPLASH SCREEN ── */
+  #splash {
+    position:fixed; inset:0; z-index:1000;
+    background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    transition:opacity .5s ease;
+  }
+  #splash.hide { opacity:0; pointer-events:none; }
+  .splash-logo {
+    display:flex; align-items:center; animation:splashPop .6s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .splash-nova { font-family:'Cinzel',serif; font-size:38px; font-weight:900; color:#fff; text-shadow:0 0 30px rgba(192,132,252,.6); }
+  .splash-dot::before { content:'✦'; font-size:24px; color:var(--gold); margin:0 5px; filter:drop-shadow(0 0 10px var(--gold)); display:inline-block; }
+  .splash-chi { font-family:'Inter',sans-serif; font-size:34px; font-weight:300; background:linear-gradient(135deg,var(--accent),#f43f5e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .splash-tagline { font-size:13px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; animation:fadeIn .8s .4s both; }
+  .splash-bar { width:120px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:8px; animation:fadeIn .8s .4s both; }
+  .splash-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),#f43f5e); animation:barLoad 1.2s .3s ease forwards; width:0; }
+  @keyframes splashPop { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes barLoad { from{width:0} to{width:100%} }
+
+  /* ── WELCOME MODAL (first-time signup) ── */
+  #welcome-overlay {
+    position:fixed; inset:0; z-index:500;
+    background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+    display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  #welcome-overlay.show { display:flex; }
+  .welcome-card {
+    background:var(--card); border:1px solid var(--border); border-radius:20px;
+    padding:32px 24px; text-align:center; max-width:340px; width:100%;
+    animation:splashPop .4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .welcome-icon { font-size:48px; margin-bottom:12px; }
+  .welcome-title { font-family:'Cinzel',serif; font-size:20px; font-weight:900; color:var(--accent); margin-bottom:16px; }
+  .welcome-msg { font-size:14px; color:var(--text); line-height:1.8; margin-bottom:8px; }
+  .welcome-by { font-size:13px; color:var(--muted); margin-bottom:24px; font-style:italic; }
+  .welcome-btn { width:100%; padding:13px; border-radius:12px; border:none; background:linear-gradient(135deg,#7c3aed,#c084fc); color:#fff; font-size:15px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash">
+  <div class="splash-logo">
+    <span class="splash-nova">Nova</span><span class="splash-dot"></span><span class="splash-chi">chi</span>
+  </div>
+  <div class="splash-tagline">Read. Write. Discover.</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- WELCOME MODAL (first-time signup only) -->
+<div id="welcome-overlay">
+  <div class="welcome-card">
+    <div class="welcome-icon">📚</div>
+    <div class="welcome-title">Welcome to Novachi!</div>
+    <div class="welcome-msg">The novels here are originally created by the users.<br><br>They cannot be found on any other platform.</div>
+    <div class="welcome-by">— By Jairell</div>
+    <button class="welcome-btn" onclick="closeWelcome()">✨ Continue</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div class="topbar-row1">
+      <div class="top10-badge">👑 Top #10</div>
+      <div class="app-logo"><span class="logo-nova">Nova</span><span class="logo-dot"></span><span class="logo-chi">chi</span></div>
+      <div class="user-icon" onclick="goTo('you')">👤</div>
+    </div>
+    <div class="search-row">
+      <div class="search-wrap">
+        <span style="color:var(--muted)">🔍</span>
+        <input type="text" id="search-input" placeholder="Search Novels..." oninput="filterNovels()">
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'all')">All</div>
+    <div class="tab" onclick="switchTab(this,'fantasy')">Fantasy</div>
+    <div class="tab" onclick="switchTab(this,'romance')">Romance</div>
+    <div class="tab" onclick="switchTab(this,'action')">Action</div>
+    <div class="tab" onclick="switchTab(this,'sci-fi')">Sci-Fi</div>
+    <div class="tab" onclick="switchTab(this,'martial arts')">Martial Arts</div>
+    <div class="tab" onclick="switchTab(this,'horror')">Horror</div>
+    <div class="tab" onclick="switchTab(this,'mystery')">Mystery</div>
+    <div class="tab" onclick="switchTab(this,'slice of life')">Slice of Life</div>
+    <div class="tab" onclick="switchTab(this,'isekai')">Isekai</div>
+  </div>
+  <div class="content">
+    <div class="section-label">📈 Top #10 Most Viewed</div>
+    <div class="top10-strip" id="top10-strip"><div class="empty-state" style="padding:20px;width:100%;font-size:12px">Loading...</div></div>
+    <div class="section-label">📚 Latest Novels</div>
+    <div id="novel-list"><div class="empty-state"><div class="empty-text">Loading novels...</div></div></div>
+  </div>
+</div>
+
+<!-- ADD NOVEL -->
+<div class="screen" id="screen-add">
+  <div class="content add-screen-inner">
+    <div class="screen-title">Add Novel</div>
+    <div class="screen-sub">Publish your novel to the world ✨</div>
+    <div class="form-group">
+      <label class="form-label">Cover Image</label>
+      <div class="cover-upload-box" onclick="document.getElementById('cover-input').click()">
+        <img id="cover-preview" src="" style="display:none">
+        <div class="cover-placeholder" id="cover-placeholder">
+          <div style="font-size:28px;margin-bottom:6px">🖼️</div>
+          <div>Tap to upload cover</div>
+          <div style="font-size:11px;margin-top:4px;color:#475569">(Cloudinary ready)</div>
+        </div>
+        <input type="file" id="cover-input" accept="image/*" onchange="previewCover(this)">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="add-title" placeholder="Enter novel title..."></div>
+    <div class="form-group"><label class="form-label">Summary</label><textarea class="form-textarea" id="add-summary" placeholder="Write a brief summary..."></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Genre</label>
+      <div class="genre-grid">
+        <div class="genre-chip" onclick="selectGenre(this)">Fantasy</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Romance</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Action</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Sci-Fi</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Horror</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Mystery</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Slice of Life</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Martial Arts</div>
+        <div class="genre-chip" onclick="selectGenre(this)">Isekai</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <div class="status-row">
+        <div class="status-btn sel-ongoing" onclick="selectStatus(this,'ongoing')">🟢 Ongoing</div>
+        <div class="status-btn" onclick="selectStatus(this,'completed')">✅ Completed</div>
+        <div class="status-btn" onclick="selectStatus(this,'hiatus')" style="flex:.8">⏸ Hiatus</div>
+      </div>
+    </div>
+    <button class="publish-btn" onclick="publishNovel()">📖 Publish Novel</button>
+  </div>
+</div>
+
+<!-- NOVEL DETAIL -->
+<div class="screen" id="screen-detail" style="padding-bottom:0">
+  <div style="overflow-y:auto;flex:1">
+    <div style="padding:14px 16px 0;display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);z-index:10;padding-bottom:4px">
+      <span style="font-size:22px;cursor:pointer" onclick="backFromDetail()">←</span>
+      <span style="font-size:13px;color:var(--muted)">Novel Details</span>
+    </div>
+    <div class="novel-detail-header">
+      <div class="detail-cover" id="detail-cover">📖</div>
+      <div class="detail-meta">
+        <div class="detail-title" id="detail-title"></div>
+        <div class="detail-author" id="detail-author"></div>
+        <div class="detail-genre" id="detail-genre"></div>
+        <div class="detail-stats">
+          <div class="detail-stat" id="detail-status"></div>
+          <div class="detail-stat">♥ <span id="detail-likes">0</span></div>
+          <div class="detail-stat">👁 <span id="detail-views">0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-summary-box">
+      <div class="detail-summary-title">Summary</div>
+      <div class="detail-summary-text" id="detail-summary"></div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-read" onclick="readFirstChapter()">📖 Start Reading</button>
+      <button class="btn-like" id="like-btn" onclick="toggleLike()">♥ Like</button>
+    </div>
+    <div class="chapters-header">
+      <div class="section-label" style="margin:0">📄 Chapters (<span id="chap-count">0</span>)</div>
+      <div class="add-chapter-btn" id="add-chap-btn" style="display:none" onclick="goTo('add-chapter')">+ Add Chapter</div>
+    </div>
+    <div id="chapter-list"></div>
+  </div>
+</div>
+
+<!-- ADD CHAPTER -->
+<div class="screen" id="screen-add-chapter">
+  <div class="read-topbar">
+    <span class="back-btn" onclick="goTo('detail')">←</span>
+    <div class="read-title">Add New Chapter</div>
+  </div>
+  <div class="content">
+    <div class="form-group">
+      <label class="form-label">Chapter Title</label>
+      <input type="text" class="form-input" id="chap-title-input" placeholder="e.g. The Beginning">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Content</label>
+      <textarea class="chapter-textarea" id="chap-content-input" placeholder="Write your chapter here..."></textarea>
+    </div>
+    <button class="publish-btn" onclick="saveChapter()">💾 Save Chapter</button>
+  </div>
+</div>
+
+<!-- READ CHAPTER -->
+<div class="screen" id="screen-read" style="padding-bottom:0">
+  <div class="read-topbar">
+    <span class="back-btn" onclick="goTo('detail')">←</span>
+    <div class="read-title" id="read-chapter-title"></div>
+  </div>
+  <div style="overflow-y:auto;flex:1">
+    <div class="read-content" id="read-chapter-content"></div>
+    <div class="read-nav" id="read-nav"></div>
+  </div>
+</div>
+
+<!-- YOU / PROFILE -->
+<div class="screen" id="screen-you">
+  <div id="auth-section" class="content add-screen-inner" style="display:flex; justify-content:center; flex-direction:column; flex:1;">
+    <div class="screen-title" style="text-align:center">Welcome</div>
+    <div class="screen-sub" style="text-align:center">Enter your Name to write stories</div>
+    <div class="form-group">
+      <label class="form-label">Your Name / Username</label>
+      <input type="text" id="auth-name" class="form-input" placeholder="e.g. Indra">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="auth-password" class="form-input" placeholder="Min. 6 characters">
+    </div>
+    <button class="publish-btn" onclick="handleSignIn()">🔑 Log In</button>
+    <button class="btn-like" style="width:100%; margin-top:12px" onclick="handleSignUp()">✨ Create Account</button>
+  </div>
+  <div id="profile-section" style="display:none; flex:1; flex-direction:column;">
+    <div class="profile-header">
+      <div class="profile-avatar"><span id="profile-emoji">✨</span></div>
+      <div class="profile-name" id="profile-name-display">My Profile</div>
+      <div class="profile-handle" id="profile-handle">@user</div>
+    </div>
+    <div class="profile-stats">
+      <div class="stat-item"><div class="stat-val" id="stat-novels">0</div><div class="stat-key">Novels</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-chapters">0</div><div class="stat-key">Chapters</div></div>
+    </div>
+    <div class="profile-section-label">
+      <span>My Published Novels</span>
+      <span style="color:#f43f5e; cursor:pointer" onclick="handleSignOut()">Logout</span>
+    </div>
+    <div id="my-novels" style="padding:0 16px; flex:1; overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-btn active" id="nav-home" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></div>
+  <div class="nav-btn" id="nav-add" onclick="goTo('add')"><span class="nav-icon">➕</span><span class="nav-label">Add</span></div>
+  <div class="nav-btn" id="nav-you" onclick="goTo('you')"><span class="nav-icon">👤</span><span class="nav-label">You</span></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+<script>
+// ══════════════════════ FIREBASE CONFIG — NOVACHI ══════════════════════
+// TODO: Replace with your Novachi Firebase config below
+const firebaseConfig = {
+  apiKey: "AIzaSyCu5XB-AWc6bXDKLX2yUzhrNgjaIXKgzl8",
+  authDomain: "novachi-a1bdd.firebaseapp.com",
+  databaseURL: "https://novachi-a1bdd-default-rtdb.firebaseio.com",
+  projectId: "novachi-a1bdd",
+  storageBucket: "novachi-a1bdd.firebasestorage.app",
+  messagingSenderId: "461571774951",
+  appId: "1:461571774951:web:b054d26382526323fc8542",
+  measurementId: "G-XLMNP7MGLK"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ══════════════════════ STATE ══════════════════════
+let novels = [];
+let myUserId = null;
+let myProfile = { name:'Writer', handle:'@writer', emoji:'✨' };
+let likedNovels = new Set();
+let viewedNovels = new Set();
+let activeTab = 'all';
+let selectedGenre = '';
+let selectedStatus = 'ongoing';
+let selectedFileObject = null;
+let currentNovelId = null;
+let currentChapterIndex = 0;
+let currentChapters = [];
+let prevScreen = 'home';
+
+// ══════════════════════ AUTH ══════════════════════
+function formatNameToEmail(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, '') + '@novachi.app';
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    myUserId = user.uid;
+    myProfile.name = user.displayName || user.email.split('@')[0];
+    myProfile.handle = '@' + myProfile.name.toLowerCase().replace(/\s+/g, '');
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('profile-section').style.display = 'flex';
+    refreshProfile();
+  } else {
+    myUserId = null;
+    document.getElementById('auth-section').style.display = 'flex';
+    document.getElementById('profile-section').style.display = 'none';
+  }
+});
+
+async function handleSignUp() {
+  const name = document.getElementById('auth-name').value.trim();
+  const pass = document.getElementById('auth-password').value.trim();
+  if (!name || !pass) return showToast('Enter your Name and Password!', '#ef4444');
+  if (pass.length < 6) return showToast('Password must be 6+ chars', '#ef4444');
+  try {
+    showToast('⏳ Creating account...', '#3b82f6');
+    const res = await auth.createUserWithEmailAndPassword(formatNameToEmail(name), pass);
+    await res.user.updateProfile({ displayName: name });
+    myProfile.name = name;
+    showToast('✅ Account Created!');
+    showWelcomeModal();
+  } catch(err) {
+    showToast(err.code === 'auth/email-already-in-use' ? '❌ Username already taken!' : '❌ ' + err.message, '#ef4444');
+  }
+}
+
+async function handleSignIn() {
+  const name = document.getElementById('auth-name').value.trim();
+  const pass = document.getElementById('auth-password').value.trim();
+  if (!name || !pass) return showToast('Enter your Name and Password!', '#ef4444');
+  try {
+    showToast('⏳ Logging in...', '#3b82f6');
+    await auth.signInWithEmailAndPassword(formatNameToEmail(name), pass);
+    showToast('✅ Welcome back!');
+  } catch(err) {
+    showToast('❌ Wrong Username or Password', '#ef4444');
+  }
+}
+
+function handleSignOut() { auth.signOut(); showToast('Logged out'); }
+
+// ══════════════════════ SPLASH ══════════════════════
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500);
+  }, 1800);
+});
+
+// ══════════════════════ WELCOME MODAL ══════════════════════
+function showWelcomeModal() {
+  document.getElementById('welcome-overlay').classList.add('show');
+}
+function closeWelcome() {
+  document.getElementById('welcome-overlay').classList.remove('show');
+}
+
+// ══════════════════════ FETCH NOVELS ══════════════════════
+async function fetchNovelsFromDB() {
+  try {
+    const snapshot = await db.collection('novels').orderBy('views', 'desc').get();
+    novels = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderTop10();
+    renderNovels();
+    if (document.getElementById('screen-you').classList.contains('active')) refreshProfile();
+  } catch (error) {
+    console.error("DB Error:", error);
+    showToast('⚠️ Failed to load novels', '#f59e0b');
+  }
+}
+fetchNovelsFromDB();
+
+// ══════════════════════ CLOUDINARY ══════════════════════
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'Chat v2');
+  try {
+    const res = await fetch('https://api.cloudinary.com/v1_1/dtxryfimj/image/upload', { method: 'POST', body: formData });
+    if (!res.ok) throw new Error('Cloudinary Failed');
+    const data = await res.json();
+    return data.secure_url;
+  } catch (err) { return null; }
+}
+
+// ══════════════════════ PUBLISH NOVEL ══════════════════════
+async function publishNovel() {
+  if (!myUserId) { showToast('⚠️ Please login first!', '#ef4444'); return goTo('you'); }
+  const title = document.getElementById('add-title').value.trim();
+  const summary = document.getElementById('add-summary').value.trim();
+  if (!title || !summary || !selectedGenre) return showToast('⚠️ Complete the form!', '#ef4444');
+
+  showToast('⏳ Publishing...', '#3b82f6');
+  let finalCoverUrl = '';
+  if (selectedFileObject) {
+    finalCoverUrl = await uploadToCloudinary(selectedFileObject);
+    if (!finalCoverUrl) return showToast('❌ Cover upload failed!', '#ef4444');
+  }
+
+  const emojis = ['📖','⚔️','🌸','🔥','🌙','💫','🐉'];
+  const novelId = 'n_' + Date.now();
+  const novel = {
+    id: novelId, title, summary, genre: selectedGenre,
+    status: selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1),
+    views: 0, likes: 0,
+    date: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+    coverDataUrl: finalCoverUrl,
+    coverEmoji: emojis[Math.floor(Math.random() * emojis.length)],
+    authorId: myUserId,
+    authorName: auth.currentUser?.displayName || myProfile.name
+  };
+
+  try {
+    await db.collection('novels').doc(novelId).set(novel);
+    showToast('✅ Novel Published!');
+    novels.unshift(novel);
+    // reset form
+    selectedFileObject = null;
+    document.getElementById('add-title').value = '';
+    document.getElementById('add-summary').value = '';
+    document.getElementById('cover-preview').style.display = 'none';
+    document.getElementById('cover-placeholder').style.display = 'flex';
+    document.querySelectorAll('.genre-chip').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.status-btn').forEach(b => b.className = 'status-btn');
+    document.querySelector('.status-btn').classList.add('sel-ongoing');
+    selectedGenre = '';
+    goTo('home');
+  } catch (err) {
+    console.error('Publish error:', err);
+    showToast('❌ Firebase Save Failed!', '#ef4444');
+  }
+}
+
+// ══════════════════════ CHAPTERS ══════════════════════
+async function fetchChapters(novelId) {
+  try {
+    const snapshot = await db.collection('novels').doc(novelId).collection('chapters').orderBy('num', 'asc').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error('Fetch chapters error:', err);
+    return [];
+  }
+}
+
+async function saveChapter() {
+  if (!myUserId) return showToast('⚠️ Please login first!', '#ef4444');
+  const title = document.getElementById('chap-title-input').value.trim();
+  const content = document.getElementById('chap-content-input').value.trim();
+  if (!title || !content) return showToast('⚠️ Fill in title and content!', '#ef4444');
+
+  showToast('⏳ Saving chapter...', '#3b82f6');
+
+  try {
+    // Get current chapter count for numbering
+    const existing = await fetchChapters(currentNovelId);
+    const chapNum = existing.length + 1;
+    const chapId = 'ch_' + Date.now();
+
+    await db.collection('novels').doc(currentNovelId).collection('chapters').doc(chapId).set({
+      id: chapId,
+      num: chapNum,
+      title,
+      content,
+      createdAt: Date.now()
+    });
+
+    showToast('✅ Chapter Saved!');
+    // Clear inputs
+    document.getElementById('chap-title-input').value = '';
+    document.getElementById('chap-content-input').value = '';
+    // Go back to detail and reload chapters
+    goTo('detail');
+  } catch (err) {
+    console.error('Save chapter error:', err);
+    showToast('❌ Failed to save chapter!', '#ef4444');
+  }
+}
+
+async function renderChapters(novelId) {
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '<div style="padding:16px;color:var(--muted);font-size:13px">Loading chapters...</div>';
+  currentChapters = await fetchChapters(novelId);
+  document.getElementById('chap-count').textContent = currentChapters.length;
+
+  if (!currentChapters.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-text">No chapters yet.<br>Be the first to add one!</div></div>';
+    return;
+  }
+
+  list.innerHTML = currentChapters.map((ch, i) => `
+    <div class="chapter-item" onclick="readChapter(${i})">
+      <div>
+        <div class="chap-num">Chapter ${ch.num}</div>
+        <div class="chap-title">${esc(ch.title)}</div>
+      </div>
+      <span style="color:var(--muted);font-size:18px">›</span>
+    </div>
+  `).join('');
+}
+
+function readChapter(index) {
+  if (!currentChapters.length) return showToast('No chapters available', '#f59e0b');
+  currentChapterIndex = index;
+  const ch = currentChapters[index];
+  document.getElementById('read-chapter-title').textContent = `Ch.${ch.num} — ${ch.title}`;
+  // Convert newlines to paragraphs
+  document.getElementById('read-chapter-content').innerHTML =
+    ch.content.split('\n').filter(p => p.trim()).map(p => `<p>${esc(p)}</p>`).join('');
+  // Prev / Next nav
+  let nav = '';
+  if (index > 0) nav += `<button class="btn-like" style="flex:1" onclick="readChapter(${index-1})">← Prev</button>`;
+  if (index < currentChapters.length - 1) nav += `<button class="btn-read" style="flex:1" onclick="readChapter(${index+1})">Next →</button>`;
+  document.getElementById('read-nav').innerHTML = nav;
+  goTo('read');
+}
+
+function readFirstChapter() {
+  if (!currentChapters.length) return showToast('⚠️ No chapters yet!', '#f59e0b');
+  readChapter(0);
+}
+
+// ══════════════════════ LIKE ══════════════════════
+async function toggleLike() {
+  if (!myUserId) return showToast('⚠️ Login to like!', '#ef4444');
+  const n = novels.find(x => x.id === currentNovelId);
+  if (!n) return;
+
+  const btn = document.getElementById('like-btn');
+  if (likedNovels.has(currentNovelId)) {
+    likedNovels.delete(currentNovelId);
+    n.likes = Math.max(0, (n.likes || 0) - 1);
+    btn.classList.remove('liked');
+    btn.textContent = '♥ Like';
+  } else {
+    likedNovels.add(currentNovelId);
+    n.likes = (n.likes || 0) + 1;
+    btn.classList.add('liked');
+    btn.textContent = '♥ Liked';
+  }
+  document.getElementById('detail-likes').textContent = fmt(n.likes);
+
+  try {
+    await db.collection('novels').doc(currentNovelId).update({ likes: n.likes });
+  } catch (err) {
+    console.error('Like error:', err);
+  }
+}
+
+// ══════════════════════ NAVIGATION ══════════════════════
+const navScreens = ['home','add','you'];
+function goTo(s) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + s).classList.add('active');
+  navScreens.forEach(n => {
+    const btn = document.getElementById('nav-' + n);
+    if (btn) btn.classList.toggle('active', n === s);
+  });
+  if (s === 'you') refreshProfile();
+  if (s === 'home') { renderTop10(); renderNovels(); }
+  if (s === 'detail') renderDetail();
+}
+
+function backFromDetail() { goTo(prevScreen === 'you' ? 'you' : 'home'); }
+
+function previewCover(input) {
+  const file = input.files[0]; if (!file) return;
+  selectedFileObject = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('cover-preview').src = e.target.result;
+    document.getElementById('cover-preview').style.display = 'block';
+    document.getElementById('cover-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════ RENDER ══════════════════════
+function renderTop10() {
+  const strip = document.getElementById('top10-strip');
+  const sorted = [...novels].sort((a,b) => b.views - a.views).slice(0, 10);
+  if (!sorted.length) { strip.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px">No novels yet</div>'; return; }
+  strip.innerHTML = sorted.map((n, i) => `
+    <div class="top10-card" onclick="openNovel('${n.id}')">
+      <div class="rank-badge ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div>
+      <div class="top10-cover" style="${n.coverDataUrl?'padding:0':''}">
+        ${n.coverDataUrl ? `<img src="${n.coverDataUrl}" style="width:100%;height:100%;object-fit:cover;">` : n.coverEmoji}
+      </div>
+      <div class="top10-title">${esc(n.title)}</div>
+      <div class="top10-views">👁 ${fmt(n.views)}</div>
+    </div>`).join('');
+}
+
+function renderNovels() {
+  const el = document.getElementById('novel-list');
+  let list = [...novels];
+  const q = document.getElementById('search-input').value.toLowerCase();
+  if (activeTab !== 'all') list = list.filter(n => n.genre.toLowerCase() === activeTab);
+  if (q) list = list.filter(n => n.title.toLowerCase().includes(q) || n.summary.toLowerCase().includes(q));
+  if (!list.length) { el.innerHTML = `<div class="empty-state"><div class="empty-text">No novels found</div></div>`; return; }
+  el.innerHTML = list.map(n => `
+    <div class="novel-card" onclick="openNovel('${n.id}')">
+      <div class="novel-cover" style="${n.coverDataUrl?'padding:0':''}">
+        ${n.coverDataUrl ? `<img src="${n.coverDataUrl}">` : n.coverEmoji}
+      </div>
+      <div class="novel-info">
+        <div class="novel-title">${esc(n.title)}</div>
+        <div class="novel-summary">${esc(n.summary)}</div>
+        <div class="novel-genre">${n.genre}</div>
+        <div class="novel-meta">
+          <div class="meta-item">♥ ${fmt(n.likes||0)}</div>
+          <div class="meta-item">👁 ${fmt(n.views||0)}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterNovels() { renderNovels(); }
+function switchTab(el, tab) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); activeTab = tab; renderNovels(); }
+function selectGenre(el) { document.querySelectorAll('.genre-chip').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); selectedGenre = el.textContent; }
+function selectStatus(el, s) { document.querySelectorAll('.status-btn').forEach(b => b.className = 'status-btn'); el.className = `status-btn sel-${s}`; selectedStatus = s; }
+
+function openNovel(id) {
+  currentNovelId = id;
+  prevScreen = document.querySelector('.screen.active').id.replace('screen-', '');
+  const n = novels.find(x => x.id === id);
+  if (n && !viewedNovels.has(id)) {
+    n.views++;
+    viewedNovels.add(id);
+    db.collection('novels').doc(id).update({ views: n.views }).catch(() => {});
+  }
+  goTo('detail');
+}
+
+function renderDetail() {
+  const n = novels.find(x => x.id === currentNovelId); if (!n) return;
+  document.getElementById('detail-title').textContent = n.title;
+  document.getElementById('detail-author').textContent = '✍️ ' + (n.authorName || 'Unknown');
+  document.getElementById('detail-genre').textContent = n.genre;
+  document.getElementById('detail-summary').textContent = n.summary;
+  document.getElementById('detail-likes').textContent = fmt(n.likes || 0);
+  document.getElementById('detail-views').textContent = fmt(n.views || 0);
+  document.getElementById('detail-cover').innerHTML = n.coverDataUrl ? `<img src="${n.coverDataUrl}">` : n.coverEmoji;
+  document.getElementById('add-chap-btn').style.display = n.authorId === myUserId ? 'block' : 'none';
+
+  // Like button state
+  const likeBtn = document.getElementById('like-btn');
+  if (likedNovels.has(currentNovelId)) {
+    likeBtn.classList.add('liked'); likeBtn.textContent = '♥ Liked';
+  } else {
+    likeBtn.classList.remove('liked'); likeBtn.textContent = '♥ Like';
+  }
+
+  // Load chapters
+  renderChapters(currentNovelId);
+}
+
+function refreshProfile() {
+  if (!myUserId) return;
+  document.getElementById('profile-name-display').textContent = myProfile.name;
+  document.getElementById('profile-handle').textContent = myProfile.handle;
+  const myNovels = novels.filter(n => n.authorId === myUserId);
+  document.getElementById('stat-novels').textContent = myNovels.length;
+  const el = document.getElementById('my-novels');
+  if (!myNovels.length) { el.innerHTML = `<div class="empty-state"><div class="empty-text">No published stories yet.</div></div>`; return; }
+  el.innerHTML = myNovels.map(n => `
+    <div class="novel-card" onclick="openNovel('${n.id}')">
+      <div class="novel-cover" style="${n.coverDataUrl?'padding:0':''}">
+        ${n.coverDataUrl ? `<img src="${n.coverDataUrl}">` : n.coverEmoji}
+      </div>
+      <div class="novel-info">
+        <div class="novel-title">${esc(n.title)}</div>
+        <div class="meta-item">👁 ${fmt(n.views||0)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function fmt(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : String(n||0); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg, bg='#34d399') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = bg;
+  t.style.color = bg === '#34d399' ? '#052e16' : '#fff';
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
